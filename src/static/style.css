@@ -1,0 +1,32 @@
+/* Custom styles for the Membersite event creator web app. */
+
+/* Fixed-width label column so all input boxes start at the same horizontal position. */
+.field-label-col {
+    min-width: 350px;
+    flex: 0 0 200px;
+    display: flex;
+    align-items: center;
+}
+
+/* Standard width for most input controls to create a table-like alignment. */
+.field-input {
+    width: 320px;
+    max-width: 100%;
+}
+
+/* Smaller inputs used for date/time ranges. */
+.field-input.small {
+    width: 136px;
+}
+
+/* Ensure input groups inherit the standard field width. */
+.input-group.field-input-group {
+    width: 320px;
+}
+
+/* Tooltip info icon styling. */
+.info-icon {
+    color: #0d6efd;
+    cursor: pointer;
+    font-size: 1rem;
+}

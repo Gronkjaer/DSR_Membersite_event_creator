@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+dev_docs/
+tests/
+.github/
+*.md
+.vscode/

@@ -1,0 +1,16 @@
+# Ignore project directories for VS Code and Spyder.
+/.vscode
+/.spyproject
+
+# Ignore cache files.
+/.pytest_cache
+/src/__pycache__
+/tests/__pycache__
+
+# Ignore screenshots.
+/src/static/screenshots/*
+/src/screenshots/*
+
+# Ignore GitHub agents.
+/.github/agents/*
+/.github/skills/*

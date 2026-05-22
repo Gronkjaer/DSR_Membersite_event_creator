@@ -1,0 +1,227 @@
+<!-- Main tab: Event creation form -->
+<h5 class="fw-bold">DSR Membersite arrangement opretter</h5>
+<p>Dette program opretter arrangementer på Membersite. Hvis skabelonen ikke indeholder et felt, så 
+    fjern fluebenet fra feltet (du kan f.eks. fjerne fluebenet fra feltet "Tekst").</p>
+
+<form id="eventForm" novalidate>
+    <div class="row">
+        <!-- Middle left: form input fields -->
+        <div class="col-lg-8">
+            {% for field, (usage, default, desc) in fields.items() %}
+                {% if field == "Første dato" %}
+                    <!-- Paired row: Dato(er) = Første dato + Sidste dato -->
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-auto field-label-col">
+                            <div class="form-check">
+                                <input class="form-check-input field-checkbox" type="checkbox"
+                                       id="use_{{ field }}" name="use_{{ field }}"
+                                       {% if usage %}checked{% endif %}>
+                                <label class="form-check-label" for="use_{{ field }}">Dato(er)</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <!-- Date picker: flatpickr will attach to this input. -->
+                            <input type="text" class="form-control form-control-sm field-input date-picker small"
+                                id="field_{{ field }}" name="{{ field }}"
+                                value="{{ default }}" placeholder="DD-MM-YYYY">
+                        </div>
+                        <div class="col-auto px-1">—</div>
+                        <div class="col-auto">
+                            <input type="text" class="form-control form-control-sm field-input date-picker small"
+                                id="field_Sidste dato" name="Sidste dato"
+                                value="{{ fields['Sidste dato'][1] }}" placeholder="DD-MM-YYYY">
+                        </div>
+                        <div class="col-auto">
+                            <!-- Tooltip icon for date fields. -->
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-html="true"
+                                  title="{{ desc | e }}">ⓘ</span>
+                        </div>
+                    </div>
+
+                {% elif field == "Sidste dato" %}
+                    {# Already rendered in the Første dato row above. #}
+
+                {% elif field == "Starttidspunkt" %}
+                    <!-- Paired row: Tidspunkt = Starttidspunkt + Sluttidspunkt -->
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-auto field-label-col">
+                            <div class="form-check">
+                                <input class="form-check-input field-checkbox" type="checkbox"
+                                       id="use_{{ field }}" name="use_{{ field }}"
+                                       {% if usage %}checked{% endif %}>
+                                <label class="form-check-label" for="use_{{ field }}">Tidspunkt</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <!-- Time input: colon is auto-inserted on blur (e.g. "1000" → "10:00"). -->
+                            <input type="text" class="form-control form-control-sm field-input time-input small"
+                                id="field_{{ field }}" name="{{ field }}"
+                                value="{{ default }}" placeholder="HH:MM">
+                        </div>
+                        <div class="col-auto px-1">—</div>
+                        <div class="col-auto">
+                            <input type="text" class="form-control form-control-sm field-input time-input small"
+                                id="field_Sluttidspunkt" name="Sluttidspunkt"
+                                value="{{ fields['Sluttidspunkt'][1] }}" placeholder="HH:MM">
+                        </div>
+                        <div class="col-auto">
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-html="true"
+                                  title="{{ desc | e }}">ⓘ</span>
+                        </div>
+                    </div>
+
+                {% elif field == "Sluttidspunkt" %}
+                    {# Already rendered in the Starttidspunkt row above. #}
+
+                {% elif field == "Adgangskode" %}
+                    <!-- Password field with masked input and visibility toggle. -->
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-auto field-label-col">
+                            <div class="form-check">
+                                <input class="form-check-input field-checkbox" type="checkbox"
+                                       id="use_{{ field }}" name="use_{{ field }}"
+                                       {% if usage %}checked{% endif %}>
+                                <label class="form-check-label" for="use_{{ field }}">{{ field }}</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="input-group input-group-sm field-input-group">
+                                <input type="password" class="form-control form-control-sm field-input"
+                                       id="field_{{ field }}" name="{{ field }}"
+                                       value="{{ default }}">
+                                <!-- Button to toggle password visibility. -->
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword"
+                                        title="Vis/skjul adgangskode">
+                                    <!-- Eye icon: shown when password is hidden. -->
+                                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                                    </svg>
+                                    <!-- Eye-slash icon: shown when password is visible. -->
+                                    <svg id="eyeSlashIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="display:none;">
+                                        <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            {% set tooltip_text = desc %}
+                            {% if field in default_values %}
+                                {% set tooltip_text = desc ~ "\nVALGFRI: Hvis intet indtastes anvendes " ~ default_values[field] ~ "." %}
+                            {% endif %}
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-html="true"
+                                  title="{{ tooltip_text | e }}">ⓘ</span>
+                        </div>
+                    </div>
+
+                {% elif field == "Tekst" %}
+                    <!-- Textarea for longer text description. -->
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-auto field-label-col">
+                            <div class="form-check">
+                                <input class="form-check-input field-checkbox" type="checkbox"
+                                       id="use_{{ field }}" name="use_{{ field }}"
+                                       {% if usage %}checked{% endif %}>
+                                <label class="form-check-label" for="use_{{ field }}">{{ field }}</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <textarea class="form-control form-control-sm field-input"
+                                      id="field_{{ field }}" name="{{ field }}"
+                                      rows="3">{{ default }}</textarea>
+                        </div>
+                        <div class="col-auto">
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-html="true"
+                                  title="{{ desc | e }}">ⓘ</span>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <!-- Standard text input field. -->
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-auto field-label-col">
+                            <div class="form-check">
+                                <input class="form-check-input field-checkbox" type="checkbox"
+                                       id="use_{{ field }}" name="use_{{ field }}"
+                                       {% if usage %}checked{% endif %}>
+                                <label class="form-check-label" for="use_{{ field }}">{{ field }}</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <input type="text" class="form-control form-control-sm field-input"
+                                id="field_{{ field }}" name="{{ field }}"
+                                value="{{ default }}">
+                        </div>
+                        <div class="col-auto">
+                            {% set tooltip_text = desc %}
+                            {% if field in default_values %}
+                                {% set tooltip_text = desc ~ "\nVALGFRI: Hvis intet indtastes anvendes " ~ default_values[field] ~ "." %}
+                            {% endif %}
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-html="true"
+                                  title="{{ tooltip_text | e }}">ⓘ</span>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Middle right: repeat frequency selector -->
+        <div class="col-lg-4">
+            <div id="repeatSelector">
+                <h6 class="fw-bold">Gentagelse</h6>
+                {% for option in radiobutton_options %}
+                <div class="form-check">
+                    <!-- Radio buttons: only one option can be selected at a time. -->
+                    <input class="form-check-input" type="radio" name="repeat"
+                           id="repeat_{{ loop.index }}" value="{{ option }}"
+                           {% if loop.first %}checked{% endif %}>
+                    <label class="form-check-label" for="repeat_{{ loop.index }}">{{ option }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom: Create event button -->
+    <div class="mt-4">
+        <button type="button" id="createEventBtn" class="btn btn-primary btn-lg">
+            Opret arrangement
+        </button>
+    </div>
+</form>
+
+<!-- Progress modal for event creation feedback -->
+<div class="modal fade" id="progressModal" tabindex="-1" aria-labelledby="progressModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressModalLabel">Opretter arrangementer</h5>
+            </div>
+            <div class="modal-body">
+                <div id="progressMessages"></div>
+            </div>
+            <!-- Footer shown while job is running: allows cancellation -->
+            <div class="modal-footer" id="progressActiveFooter" style="display:none;">
+                <button type="button" class="btn btn-danger" id="cancelCreateBtn">Afbryd</button>
+            </div>
+            <div class="modal-footer" id="progressFooter" style="display:none;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Luk</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Duplicate confirmation modal -->
+<div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="duplicateModalLabel">Risiko for dublet</h5>
+            </div>
+            <div class="modal-body" id="duplicateMessage"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="duplicateCancel" data-bs-dismiss="modal">Annuller</button>
+                <button type="button" class="btn btn-primary" id="duplicateConfirm">Ja, opret alligevel</button>
+            </div>
+        </div>
+    </div>
+</div>

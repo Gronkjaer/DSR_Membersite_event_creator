@@ -1,0 +1,95 @@
+# This workflow runs linting, tests, and builds a Docker image.
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+# Readable name of the workflow.
+name: Workflow that test and ship the Python code
+
+# Specify which events that triggers the workflow (make the workflow occour).
+# Here it occurs when pushing to the main branch, making a pull requiest, or when activating it manually.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  # Add a button to Github, which triggers the workflow, when the button is clicked.
+
+# Allow the workflow to read the files in the repository (but not to write).
+permissions:
+  contents: read
+
+# List all jobs that is performed. Together, all the jobs make out the workflow/pipeline.
+# The jobs can be devided into lint, test and build (possible more). This improves the readability, but in if you 
+# wanted, you could put all the jobs into the same category, e.g. put all jobs into build. However, it has some
+# advantaces, for instance there is no need to test the same linting for different versions of Python. 
+jobs:
+
+  # --------------------------------------------------------------------------------- #
+  #                             Jobs for checking linting                             #
+  #              (There is no need to test on various operating systems)              #
+  # --------------------------------------------------------------------------------- #
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      # Step 1: Check out (clone) the repository, which enables the workflow to access the pipelines.
+      - uses: actions/checkout@v6
+
+      # Step 2: Specify which Python versions to test (here Python 3.12).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: 'pip'  # Optional, but speed up the workflow.
+        
+      # Step 3: Install packages to check for linting.
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8
+      
+      # Step 4: Check if the code is compliant with black (PEP8) using a line length of 119.
+      - name: Check linting using black
+        run: black --check --line-length 119 .
+      
+      # Step 5: Check if there are critical programming errors using flake8.
+      - name: Check critical errors and complexity using Flake8
+        run: flake8 . --max-line-length=119 --max-complexity=30 --exclude=.git,__pycache__,.venv,build,dist
+
+  # --------------------------------------------------------------------------------- #
+  #                      Jobs for testing the code using pytest                       #
+  # (The test are performed on various operating systems and various Python versions) #
+  # --------------------------------------------------------------------------------- #
+  test:
+
+    # Define some details which is used later.
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    # Specify which operating system to test (here latest version of Ubuntu, MacOS and Windows)
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+    # Step 1: Check out (clone) the repository, which enables the workflow to access the files.
+    - uses: actions/checkout@v6
+
+    # Step 2: Specify which Python versions to test (here Python 3.10 until 3.13).
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'  # Optional, but speed up the workflow.
+
+    # Step 3: Install dependencies as indicated in requirements.txt file + pytest
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+    # Step 4: Use pytest to check for unit-test etc.
+    - name: Test with pytest
+      run: pytest -q --disable-warnings --maxfail=1
