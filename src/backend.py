@@ -1542,7 +1542,7 @@ def is_running_in_docker() -> bool:
 
     Returns
     -------
-    bool
+    running_in_docker : bool
         True if running in Docker, False otherwise.
     """
 
@@ -1560,6 +1560,30 @@ def is_running_in_docker() -> bool:
         pass
 
     return running_in_docker
+
+
+# ------------------------------
+# Render
+# ------------------------------
+def is_running_in_render() -> bool:
+    """Check if the application is running inside a Docker container in Render.
+
+    Returns
+    -------
+    running_in_render : bool
+        True if running in Render, False otherwise.
+    """
+
+    # Assume by defaultthat we are not running in Render.
+    running_in_render = False
+
+    # Check for environment variable that Render sets.
+    possible_render_env_vars = ["RENDER", "RENDER_SERVICE_ID", "RENDER_INSTANCE_ID"]
+    for var in possible_render_env_vars:
+        if os.getenv(var) is not None:
+            running_in_render = True
+
+    return running_in_render
 
 
 # ------------------------------

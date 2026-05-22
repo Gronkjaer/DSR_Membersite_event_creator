@@ -13,7 +13,9 @@
 # ------------------------------
 import datetime
 import time
+import traceback
 import shutil
+
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -25,7 +27,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.webdriver import WebDriver  # Only used for type hints.
 from typing import Callable
 
-from backend import is_running_in_docker
+from backend import is_running_in_docker, is_running_in_render
 from utils import CheckType
 
 
@@ -224,11 +226,12 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
         A maximized Chrome browser at 80% zoom.
     """
 
-    # Determine if the code is running inside a Docker container.
+    # Determine if the code is running inside a Docker container or in Render.
     is_docker = is_running_in_docker()
+    is_render = is_running_in_render()
 
     # Raise error if Chromium and Chromedriver are not available.
-    if is_docker:
+    if is_docker or is_render:
         chromium_path, chromedriver_path = get_paths_of_chronium_and_chromedriver()
 
     # Intialize options variable. The main purpose is to specify that Chrome must be zoomed outout.
@@ -237,12 +240,12 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
     options = Options()
 
     # Options if running on laptop.
-    if not is_docker:
+    if not is_docker and not is_render:
         options.add_argument("--start-maximized")  # Maximize window.
         options.add_argument("--force-device-scale-factor=0.8")  # 80% zoom.
 
-    # Options if running inside Docker.
-    if is_docker:
+    # Options if running inside Docker or Render.
+    if is_docker or is_render:
         options.add_argument("--window-size=3840,2160")  # Window size.
         options.add_argument("--headless=new")  # Run in headless mode => No visible window (required for Docker).
         options.add_argument("--disable-gpu")  # Disable GPU for better compatibility in headless mode.
@@ -261,13 +264,11 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
 
     # Create the driver.
     try:
-        if not is_docker:
+        if not is_docker and not is_render:
             driver = webdriver.Chrome(options=options)  # pyright: ignore
         else:
             driver = webdriver.Chrome(options=options, service=service)  # pyright: ignore
-    except Exception as e:
-        import traceback
-
+    except Exception:
         traceback.print_exc()
         raise
 

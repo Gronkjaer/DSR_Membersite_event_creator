@@ -46,7 +46,7 @@ job_drivers_lock = threading.Lock()
 # ------------------------------
 def get_folderpath_of_screenshots() -> pathlib.Path:
     """Return the folder path where screenshots are saved."""
-    screenshot_dir = pathlib.Path(__file__).resolve().parent.parent / "screenshots"
+    screenshot_dir = pathlib.Path(__file__).resolve().parent / "static" / "screenshots"
     screenshot_dir.mkdir(exist_ok=True)
     return screenshot_dir
 
