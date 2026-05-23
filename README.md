@@ -51,7 +51,7 @@ The app will then be available at `http://localhost:5000`.
 │   ├── static/                
 │   │   ├── style.css       # CSS files (style of frontend)
 │   │   └── app.js/         # Javascript functions (functionality of frontend)
-│   ├── app.py              # Flask server for the webpage (backend). Run this file to launch the web-calculator.
+│   ├── app.py              # Flask server for the webpage (backend). Run this file to launch the web application.
 │   ├── autofill_event.py   # Functionality to autofill a single event on Membersite using Selenium. 
 │   ├── backend.py          # Functions to handle and validate data.
 │   └── utils.py            # Simple helper functions. 
