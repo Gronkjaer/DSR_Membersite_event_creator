@@ -17,7 +17,6 @@ import traceback
 import shutil
 
 
-from pandas import options
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -741,7 +740,6 @@ def _save_event(driver: WebDriver) -> None:
         raise EventCreationError("Kunne ikke finde 'Gem' knappen på MemberSite.")
 
     try:
-        1 / 0  # Debug line to test screenshot capture.
         save_button.click()
     except Exception:
         raise EventCreationError(
