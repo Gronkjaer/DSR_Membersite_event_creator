@@ -56,7 +56,7 @@ def _save_debug_screenshot(driver: object) -> str | None:
 
     Returns
     -------
-    str | None
+    img_url : str | None
         The URL of the screenshot or `None` on failure.
     """
     if driver is None:
@@ -68,11 +68,12 @@ def _save_debug_screenshot(driver: object) -> str | None:
         img_folder = get_folderpath_of_screenshots()
         img_path = str(img_folder / img_name)
         driver.save_screenshot(img_path)  # pyright: ignore
+        img_url = f"/screenshots/{img_name}"
 
     except Exception:
-        img_path = None
+        img_url = None
 
-    return img_path
+    return img_url
 
 
 def _delete_old_screenshots(days_old: int = 30) -> None:
