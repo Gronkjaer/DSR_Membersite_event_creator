@@ -17,6 +17,7 @@ import traceback
 import shutil
 
 
+from pandas import options
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -212,6 +213,71 @@ def _enter_datetime_into_field(
     return None
 
 
+def _get_options_for_webdriver() -> tuple[Options, Service | None]:
+
+    # Get paths of Chromium and Chromedriver if running in Docker.
+    is_containerized = is_running_in_a_container()
+    if is_containerized:
+        chromium_path, chromedriver_path = get_paths_of_chronium_and_chromedriver()
+
+        # Error check.
+        if not isinstance(chromium_path, str) or not isinstance(chromedriver_path, str):
+            raise EventCreationError(
+                f"Unexpected paths to be strings. Chronium path has the type {type(chromium_path)}, and Chromedriver "
+                + f"path has the type {type(chromedriver_path)}."
+            )
+
+    # Intialize options variable. The main purpose is to specify that Chrome must be zoomed out.
+    # If any elements are not visible on the screen (and scrolling is required to see them), then Selenium
+    # cannot interact with the elements. By zooming out, more elements fit on the screen and become interactable.
+    options = Options()
+
+    # Options if running on laptop.
+    if not is_containerized:
+        options.add_argument("--start-maximized")  # Maximize window.
+        options.add_argument("--force-device-scale-factor=0.8")  # 80% zoom.
+        service = None
+
+    # Options if running inside Docker or Render.
+    else:
+        options.add_argument("--window-size=1920,1080")  # Window size.
+        options.add_argument("--headless=new")  # Run in headless mode => No visible window (required for Docker).
+        options.add_argument("--disable-gpu")  # Disable GPU for better compatibility in headless mode.
+        options.add_argument("--no-sandbox")  # Required for Docker.
+
+        # Reduce memory usage.
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--memory-pressure-off")
+        options.add_argument("--max_old_space_size=128")
+        options.add_argument("--single-process")
+        options.add_argument("--no-zygote")
+        options.add_argument("--hide-scrollbars")
+        options.add_argument("--mute-audio")
+
+        # Disable unnecessary systems.
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-dev-tools")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-background-networking")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--disable-sync")
+        options.add_argument("--disable-default-apps")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-notifications")
+
+        # Paths of Chromium and Chromedriver.
+        options.binary_location = chromium_path  # type: ignore
+        service = Service(chromedriver_path)  # type: ignore
+
+    # Options which improves the start up time.
+    options.add_argument("--disable-extensions")  # Disable extensions.
+    options.add_argument("--no-first-run")  # Skip first-run setup.
+    options.add_argument("--no-default-browser-check")  # Skip default browser check.
+
+    return options, service
+
+
 def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = None) -> WebDriver:
     """Create and configure a Chrome WebDriver instance.
 
@@ -226,54 +292,13 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
         A maximized Chrome browser at 80% zoom.
     """
 
-    # Determine if the code is running inside a container.
-    is_containerized = is_running_in_a_container()
-
-    # Raise error if Chromium and Chromedriver are not available.
-    if is_containerized:
-        chromium_path, chromedriver_path = get_paths_of_chronium_and_chromedriver()
-
-        # Error check.
-        if not isinstance(chromium_path, str) or not isinstance(chromedriver_path, str):
-            raise EventCreationError(
-                f"Unexpected paths to be strings. Chronium path has the type {type(chromium_path)}, and Chromedriver "
-                + f"path has the type {type(chromedriver_path)}."
-            )
-
-    # Intialize options variable. The main purpose is to specify that Chrome must be zoomed outout.
-    # If any elements are not visible on the screen (and scrolling is required to see them), then Selenium
-    # cannot interact with the elements. By zooming out, more elements fit on the screen and become interactable.
-    options = Options()
-
-    # Options if running on laptop.
-    if not is_containerized:
-        options.add_argument("--start-maximized")  # Maximize window.
-        options.add_argument("--force-device-scale-factor=0.8")  # 80% zoom.
-
-    # Options if running inside Docker or Render.
-    if is_containerized:
-        options.add_argument("--window-size=3840,2160")  # Window size.
-        options.add_argument("--headless=new")  # Run in headless mode => No visible window (required for Docker).
-        options.add_argument("--disable-gpu")  # Disable GPU for better compatibility in headless mode.
-        options.add_argument("--no-sandbox")  # Required for Docker.
-        options.add_argument("--disable-dev-shm-usage")  # To prevent crashes in Docker due to limited memory size.
-        options.add_argument("--single-process")  # To prevent Render from crashing due to restrained resources.
-        options.add_argument("--disable-dev-tools")  # Disable DevTools to save resources.
-        options.add_argument("--no-zygote")  # Disable zygote process for better compatibility in Docker.
-        options.binary_location = chromium_path  # Specify Chromium path for Docker.  # type: ignore
-        service = Service(chromedriver_path)  # Specify chromedriver path for Docker.  # type: ignore
-
-    # Options which improves the start up time.
-    options.add_argument("--disable-extensions")  # Disable extensions.
-    options.add_argument("--no-first-run")  # Skip first-run setup.
-    options.add_argument("--no-default-browser-check")  # Skip default browser check.
+    # Get Chrome options. The main purposes is to zoom out (so Selenium can see and interact with all elements), and to
+    # reduce the memory usage when running inside Docker.
+    options, service = _get_options_for_webdriver()
 
     # Create the driver.
     try:
-        if not is_containerized:
-            driver = webdriver.Chrome(options=options)  # pyright: ignore
-        else:
-            driver = webdriver.Chrome(options=options, service=service)  # pyright: ignore
+        driver = webdriver.Chrome(options=options, service=service)  # type: ignore
     except Exception:
         traceback.print_exc()
         raise
