@@ -1535,10 +1535,20 @@ def _validate_participant_list(data: dict) -> str | None:
 
 
 # ------------------------------
-# Docker
+# Containers
 # ------------------------------
+def is_running_in_a_container() -> bool:
+    """Return True if the application is running in a containerized environment."""
+
+    is_docker = is_running_in_docker()
+    is_render = is_running_in_render()
+    is_containerized = is_docker or is_render
+
+    return is_containerized
+
+
 def is_running_in_docker() -> bool:
-    """Check if the application is running inside a Docker container.
+    """Return True if the application is running inside a Docker container.
 
     Returns
     -------
@@ -1562,11 +1572,8 @@ def is_running_in_docker() -> bool:
     return running_in_docker
 
 
-# ------------------------------
-# Render
-# ------------------------------
 def is_running_in_render() -> bool:
-    """Check if the application is running inside a Docker container in Render.
+    """Return True if the application is running inside a Docker container in Render.
 
     Returns
     -------

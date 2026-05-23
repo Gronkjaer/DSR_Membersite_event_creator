@@ -27,7 +27,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.webdriver import WebDriver  # Only used for type hints.
 from typing import Callable
 
-from backend import is_running_in_docker, is_running_in_render
+from backend import is_running_in_a_container
 from utils import CheckType
 
 
@@ -226,13 +226,19 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
         A maximized Chrome browser at 80% zoom.
     """
 
-    # Determine if the code is running inside a Docker container or in Render.
-    is_docker = is_running_in_docker()
-    is_render = is_running_in_render()
+    # Determine if the code is running inside a container.
+    is_containerized = is_running_in_a_container()
 
     # Raise error if Chromium and Chromedriver are not available.
-    if is_docker or is_render:
+    if is_containerized:
         chromium_path, chromedriver_path = get_paths_of_chronium_and_chromedriver()
+
+        # Error check.
+        if not isinstance(chromium_path, str) or not isinstance(chromedriver_path, str):
+            raise EventCreationError(
+                f"Unexpected paths to be strings. Chronium path has the type {type(chromium_path)}, and Chromedriver "
+                + f"path has the type {type(chromedriver_path)}."
+            )
 
     # Intialize options variable. The main purpose is to specify that Chrome must be zoomed outout.
     # If any elements are not visible on the screen (and scrolling is required to see them), then Selenium
@@ -240,12 +246,12 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
     options = Options()
 
     # Options if running on laptop.
-    if not is_docker and not is_render:
+    if not is_containerized:
         options.add_argument("--start-maximized")  # Maximize window.
         options.add_argument("--force-device-scale-factor=0.8")  # 80% zoom.
 
     # Options if running inside Docker or Render.
-    if is_docker or is_render:
+    if is_containerized:
         options.add_argument("--window-size=3840,2160")  # Window size.
         options.add_argument("--headless=new")  # Run in headless mode => No visible window (required for Docker).
         options.add_argument("--disable-gpu")  # Disable GPU for better compatibility in headless mode.
@@ -264,7 +270,7 @@ def _initialize_driver(on_driver_created: Callable[[WebDriver], None] | None = N
 
     # Create the driver.
     try:
-        if not is_docker and not is_render:
+        if not is_containerized:
             driver = webdriver.Chrome(options=options)  # pyright: ignore
         else:
             driver = webdriver.Chrome(options=options, service=service)  # pyright: ignore
@@ -301,8 +307,8 @@ def get_paths_of_chronium_and_chromedriver() -> tuple[str, str] | tuple[None, No
     """
 
     # Stop if this is not a Docker environment.
-    is_docker = is_running_in_docker()
-    if not is_docker:
+    is_containerized = is_running_in_a_container()
+    if not is_containerized:
         return (None, None)
 
     # Get paths.
