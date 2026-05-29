@@ -33,9 +33,9 @@ python app.py
 Alternative, if you want to run the application using Docker, execute the commands below.
 ```bash
 docker build -t dsr_event_creator .   
-docker run -p 5000:5000 dsr_event_creator 
+docker run -p 5001:5001 dsr_event_creator 
 ```
-The app will then be available at `http://localhost:5000`.
+The app will then be available at `http://localhost:5001`.
 
 
 <br>

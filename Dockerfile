@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Set Flask and port environment variables.
 ENV FLASK_APP=src.app
-ENV PORT=5000
+ENV PORT=5001
 
 # Install Chromium + dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
